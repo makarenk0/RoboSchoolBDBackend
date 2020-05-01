@@ -8,6 +8,7 @@ namespace RoboSchoolBDProject.ViewModel
     class MainWindowViewModel : BaseViewModel, IContentOwner
     {
         private INavigatable _content;
+       
 
         public MainWindowViewModel()
         {

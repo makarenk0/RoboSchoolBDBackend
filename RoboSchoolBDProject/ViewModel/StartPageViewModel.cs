@@ -2,6 +2,8 @@
 using MySql.Data.MySqlClient;
 using System;
 using System.Data.Common;
+using System.Data;
+using RoboSchoolBDProject.Tools.DataBase;
 
 namespace RoboSchoolBDProject.ViewModel
 {
@@ -21,40 +23,17 @@ namespace RoboSchoolBDProject.ViewModel
 
         public StartPageViewModel()
         {
-            TestString += "Getting Connection ...\n";
-            MySqlConnection conn = DBUtils.GetDBConnection();
-
-            try
-            {
-                TestString += "Openning Connection ...\n";
-
-                conn.Open();
-
-                TestString += "Connection successful!\n";
-            }
-            catch (Exception e)
-            {
-                TestString += ("Error: " + e.Message + "\n");
-            }
             // TESTING (GET DATA FROM TABLE)
-            string sql = "SELECT * FROM TestTable";
-            MySqlCommand cmd = conn.CreateCommand();
 
-            cmd.Connection = conn;
-            cmd.CommandText = sql;
-
-            using (DbDataReader reader = cmd.ExecuteReader())
+            using (DbDataReader reader = DBController.Execute("SELECT * FROM TestTable"))
             {
-                if (reader.HasRows)
-                {
-
-                    while (reader.Read())
-                    {
+                 while (reader.Read())
+                 {
                         
                         String str = reader.GetString(0);
                         TestString += str;
-                    }
-                }
+                        TestString += reader.GetDataTypeName(0).ToString();
+                 }
             }
         }
     }
