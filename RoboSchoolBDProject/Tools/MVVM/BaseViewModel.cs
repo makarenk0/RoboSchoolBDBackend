@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace Interface.Tools.MVVM
+namespace RoboSchoolBDProject.Tools.MVVM
 {
     internal abstract class BaseViewModel : INotifyPropertyChanged
     {

@@ -1,9 +1,7 @@
-﻿using Interface.Tools.MVVM;
+﻿using RoboSchoolBDProject.Tools.MVVM;
 using MySql.Data.MySqlClient;
 using System;
-using System.Collections.Generic;
 using System.Data.Common;
-using System.Text;
 
 namespace RoboSchoolBDProject.ViewModel
 {

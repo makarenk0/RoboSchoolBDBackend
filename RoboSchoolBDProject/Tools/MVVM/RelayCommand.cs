@@ -2,7 +2,7 @@
 using System.Windows.Input;
 
 
-namespace Interface.Tools.MVVM
+namespace RoboSchoolBDProject.Tools.MVVM
 {
     public class RelayCommand<T> : ICommand
     {

@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <Folder Include="Tools\MVVM\" />
+    <Folder Include="Tools\DataBase\" />
   </ItemGroup>
 
   <ItemGroup>
