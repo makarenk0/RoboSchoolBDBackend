@@ -1,40 +1,58 @@
 ﻿using RoboSchoolBDProject.Tools.MVVM;
-using MySql.Data.MySqlClient;
-using System;
-using System.Data.Common;
-using System.Data;
 using RoboSchoolBDProject.Tools.DataBase;
 
 namespace RoboSchoolBDProject.ViewModel
 {
     class StartPageViewModel : BaseViewModel
     {
-        private String _testString = "";
-
-        public String TestString
-        {
-            get { return _testString; }
-            set
-            {
-                _testString = value;
-                OnPropertyChanged();
-            }
-        }
-
+        private RelayCommand<object> _signManagerCommand;
+        private RelayCommand<object> _signTeacherCommand;
+        private RelayCommand<object> _signAdministartorCommand;
+    
         public StartPageViewModel()
         {
-            // TESTING (GET DATA FROM TABLE)
+           
+        }
 
-            using (DbDataReader reader = DBController.Execute("SELECT * FROM TestTable"))
+        #region Commands
+        public RelayCommand<object> SignManagerCommand
+        {
+            get
             {
-                 while (reader.Read())
-                 {
-                        
-                        String str = reader.GetString(0);
-                        TestString += str;
-                        TestString += reader.GetDataTypeName(0).ToString();
-                 }
+                return _signManagerCommand ?? (_signManagerCommand = new RelayCommand<object>(SignManagerImp,
+                    o => true));
             }
         }
+        public RelayCommand<object> SignTeacherCommand
+        {
+            get
+            {
+                return _signTeacherCommand ?? (_signTeacherCommand = new RelayCommand<object>(SignTeacherImp,
+                    o => true));
+            }
+        }
+        public RelayCommand<object> SignAdministartorCommand
+        {
+            get
+            {
+                return _signAdministartorCommand ?? (_signAdministartorCommand = new RelayCommand<object>(SignAdministartorImp,
+                    o => true));
+            }
+        }
+        #endregion
+
+        private void SignManagerImp(object obj)
+        {
+            DBController.Execute("SELECT * FROM TestTable");
+        }
+        private void SignTeacherImp(object obj)
+        {
+
+        }
+        private void SignAdministartorImp(object obj)
+        {
+
+        }
+
     }
 }
