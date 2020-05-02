@@ -1,5 +1,4 @@
 ﻿using RoboSchoolBDProject.Tools.MVVM;
-using RoboSchoolBDProject.Tools.DataBase;
 
 namespace RoboSchoolBDProject.ViewModel
 {
@@ -43,7 +42,7 @@ namespace RoboSchoolBDProject.ViewModel
 
         private void SignManagerImp(object obj)
         {
-            DBController.Execute("SELECT * FROM TestTable");
+      
         }
         private void SignTeacherImp(object obj)
         {
