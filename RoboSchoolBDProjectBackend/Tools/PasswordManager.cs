@@ -11,7 +11,7 @@ namespace RoboSchoolBDProjectBackend.Tools
         {
             string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
             password: password,
-            salt: GenerateSalt_128(),
+            salt: salt,
             prf: KeyDerivationPrf.HMACSHA1,
             iterationCount: 10000,
             numBytesRequested: 256 / 8));
@@ -24,6 +24,10 @@ namespace RoboSchoolBDProjectBackend.Tools
             using (var rng = RandomNumberGenerator.Create())
             {
                 rng.GetBytes(salt);
+            }
+            for (int i = 0; i < salt.Length; i++)
+            {
+                salt[i] = (byte)((int)salt[i] % 64);
             }
             return salt;
         }
