@@ -32,6 +32,7 @@ namespace RoboSchoolBDProjectBackend
         public void ConfigureServices(IServiceCollection services)
         {
 
+            services.AddCors();
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                    .AddJwtBearer(options =>
                    {
@@ -57,7 +58,7 @@ namespace RoboSchoolBDProjectBackend
                        };
                    });
 
-            services.AddCors();
+            
             services.AddDbContext<ManagerContext>(options =>
             options.UseMySql(Configuration.GetConnectionString("RoboSchoolDatabase")));
 
@@ -77,7 +78,8 @@ namespace RoboSchoolBDProjectBackend
 
             app.UseRouting();
 
-            app.UseCors(builder => builder.AllowAnyOrigin());
+            app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyHeader()
+                            .AllowAnyMethod());
 
             app.UseAuthentication();
             app.UseAuthorization();

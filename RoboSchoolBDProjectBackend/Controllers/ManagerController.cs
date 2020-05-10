@@ -5,8 +5,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -92,42 +91,7 @@ namespace RoboSchoolBDProjectBackend.Controllers
             return null;
         }
 
-        // [HttpPost("login")]
-        //// [ValidateAntiForgeryToken]
-        // [Consumes("application/json")]
-        // public async Task<IActionResult> Login(SignInForm form)
-        // {
-        //     if (ModelState.IsValid)
-        //     {
-        //         var manager = await _context.HashSalts.FromSqlInterpolated($"SELECT Manager_hash, Manager_salt FROM Managers WHERE Managers.Email = {form.Login}").ToListAsync();
-
-        //         byte[] byteArr = Encoding.ASCII.GetBytes(manager.First().Manager_salt);
-        //         string passwordHashed = PasswordManager.PasswordSaveHashing(form.Password, byteArr);
-
-        //         if (passwordHashed == manager.First().Manager_hash)
-        //         {
-        //             await Authenticate(form.Login); // аутентификация
-
-        //             return RedirectToAction("Index", "Home");
-        //         }
-        //         ModelState.AddModelError("", "Некорректные логин и(или) пароль");
-        //     }
-        //     return Ok();
-        // }
-
-        // private async Task Authenticate(string userName)
-        // {
-        //     // создаем один claim
-        //     var claims = new List<Claim>
-        //     {
-        //         new Claim(ClaimsIdentity.DefaultNameClaimType, userName)
-        //     };
-        //     // создаем объект ClaimsIdentity
-        //     ClaimsIdentity id = new ClaimsIdentity(claims, "ApplicationCookie", ClaimsIdentity.DefaultNameClaimType, ClaimsIdentity.DefaultRoleClaimType);
-        //     // установка аутентификационных куки
-        //     await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(id));
-        // }
-
+        [Authorize]
         [HttpGet("all")]
         public async Task<IActionResult> GetAllManagers()
         {
