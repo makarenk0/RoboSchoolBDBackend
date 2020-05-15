@@ -5,9 +5,10 @@ using System.Threading.Tasks;
 
 namespace RoboSchoolBDProjectBackend.Models
 {
-    public class Manager
+    public class SignInForm
     {
-        public int Id { get; set; }
-        public String Name { get; set; }
+        public String Login { get; set; }
+        public String Password { get; set; }
+        public String Role { get; set; }
     }
 }
