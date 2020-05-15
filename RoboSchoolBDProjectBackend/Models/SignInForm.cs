@@ -9,5 +9,6 @@ namespace RoboSchoolBDProjectBackend.Models
     {
         public String Login { get; set; }
         public String Password { get; set; }
+        public String Role { get; set; }
     }
 }

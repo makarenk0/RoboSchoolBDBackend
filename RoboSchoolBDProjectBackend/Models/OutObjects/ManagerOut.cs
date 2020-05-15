@@ -9,10 +9,10 @@ namespace RoboSchoolBDProjectBackend.Models
     public class ManagerOut
     {
         [Key]
-        public int Manager_id { get; set; }
-        public String Manager_name { get; set; }
-        public String Manager_surname { get; set; }
-        public String Manager_lastname { get; set; }
-        public String Email { get; set; }
+        public int id_manager { get; set; }
+        public String name { get; set; }
+        public String surname { get; set; }
+        public String lastname { get; set; }
+        public String email { get; set; }
     }
 }

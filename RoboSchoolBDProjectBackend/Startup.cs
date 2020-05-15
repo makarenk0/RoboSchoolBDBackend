@@ -62,6 +62,9 @@ namespace RoboSchoolBDProjectBackend
             services.AddDbContext<ManagerContext>(options =>
             options.UseMySql(Configuration.GetConnectionString("RoboSchoolDatabase")));
 
+            services.AddDbContext<AdminContext>(options =>
+           options.UseMySql(Configuration.GetConnectionString("RoboSchoolDatabase")));
+
             services.AddMvc();
         }
 
