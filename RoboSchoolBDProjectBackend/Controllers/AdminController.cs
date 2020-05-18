@@ -11,6 +11,8 @@ using RoboSchoolBDProjectBackend.Models;
 using RoboSchoolBDProjectBackend.Tools;
 using RoboSchoolBDProjectBackend.Models.Teacher;
 using RoboSchoolBDProjectBackend.Models.OutObjects;
+using RoboSchoolBDProjectBackend.Models.Admin;
+using RoboSchoolBDProjectBackend.Models.OutObjects.Course;
 
 namespace RoboSchoolBDProjectBackend.Controllers
 {
@@ -48,14 +50,13 @@ namespace RoboSchoolBDProjectBackend.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var manager = await _context.ManagersOut.FromSqlRaw("SELECT id_manager, name, surname, lastname, email FROM Managers").ToListAsync();
-
-            if (manager == null)
+            var managers = await _context.ManagersOut.FromSqlRaw("SELECT id_manager, name, surname, lastname, email FROM Managers").ToListAsync();
+            //var a = User.Identity.Name;  know who
+            if (managers == null)
             {
                 return NotFound();
             }
-            //var a = User.Identity.Name;  know who
-            return Ok(manager);
+            return Ok(managers);
         }
 
         [Authorize]
@@ -83,15 +84,9 @@ namespace RoboSchoolBDProjectBackend.Controllers
             byte[] salt = PasswordManager.GenerateSalt_128();
             string saltStr = Encoding.ASCII.GetString(salt);
             await _context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Managers VALUES ({null}, {manager.name}, {manager.surname}, {manager.lastname}, {manager.email}, {PasswordManager.PasswordSaveHashing(manager.Password_temp, salt)} , {saltStr});");
-            if (manager == null)
-            {
-                return NotFound();
-            }
             return Ok();
         }
         #endregion
-
-
 
         #region Teachers
         [Authorize]
@@ -102,14 +97,13 @@ namespace RoboSchoolBDProjectBackend.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var teacher = await _context.TeachersOut.FromSqlRaw("SELECT id_teacher, name, surname, lastname, email, work_begin, work_exp FROM Teachers").ToListAsync();
-
-            if (teacher == null)
+            var teachers = await _context.TeachersOut.FromSqlRaw("SELECT id_teacher, name, surname, lastname, email, work_begin, work_exp FROM Teachers").ToListAsync();
+            //var a = User.Identity.Name;  know who
+            if (teachers == null)
             {
                 return NotFound();
             }
-            //var a = User.Identity.Name;  know who
-            return Ok(teacher);
+            return Ok(teachers);
         }
 
         [Authorize]
@@ -137,10 +131,6 @@ namespace RoboSchoolBDProjectBackend.Controllers
             byte[] salt = PasswordManager.GenerateSalt_128();
             string saltStr = Encoding.ASCII.GetString(salt);
             await _context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Teachers VALUES ({null}, {teacher.name}, {teacher.surname}, {teacher.lastname}, {teacher.email},  {DateTime.Now}, {0}, {PasswordManager.PasswordSaveHashing(teacher.Password_temp, salt)} , {saltStr});");
-            if (teacher == null)
-            {
-                return NotFound();
-            }
             return Ok();
         }
         #endregion
@@ -155,12 +145,23 @@ namespace RoboSchoolBDProjectBackend.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var schools = await _context.SchoolsOut.FromSqlRaw("SELECT id_school, adress, open_date, aud_number, id_teacher, id_manager FROM Schools").ToListAsync();
+            var schools_items = await _context.School_items.FromSqlRaw("SELECT Schools.id_school, Schools.adress, Schools.open_date, Schools.aud_number, Schools.id_teacher, Schools.id_manager, Items.id_item, Items.name, School_items.items_num FROM Schools, School_items, Items WHERE Schools.id_school = School_items.id_school AND School_items.id_item = Items.id_item").ToListAsync();
+            
+            List<SchoolOut> schools = new List<SchoolOut>();
 
-            if (schools == null)
+            foreach (School_items school in schools_items)
             {
-                return NotFound();
+                var foundObj = schools.Find(elem => elem.id_school == school.id_school);
+                if (foundObj != null)
+                {
+                    foundObj.items.Add(new ItemForSchool(school.id_item, school.name, school.items_num));
+                }
+                else
+                {
+                    schools.Add(new SchoolOut(school));
+                }
             }
+
             return Ok(schools);
         }
 
@@ -187,10 +188,156 @@ namespace RoboSchoolBDProjectBackend.Controllers
             {
                 return BadRequest(ModelState);
             }
-            await _context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Schools VALUES ({null}, {school.adress}, {DateTime.Now},{Int32.Parse(school.aud_number)}, {school.id_manager}, {school.id_teacher});");
-            if (school == null)
+            await _context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Schools VALUES ({null}, {school.adress}, {DateTime.Now},{school.aud_number}, {school.id_manager}, {school.id_teacher});");
+            return Ok();
+        }
+        #endregion
+
+        #region Providers
+
+        [Authorize]
+        [HttpGet("get_all_providers")]
+        public async Task<IActionResult> GetAllProviders()
+        {
+            if (!ModelState.IsValid)
             {
-                return NotFound();
+                return BadRequest(ModelState);
+            }
+            var providers = await _context.ProvidersOut.FromSqlRaw("SELECT prov_name, contact_number, site_link FROM Providers").ToListAsync();
+            
+            return Ok(providers);
+        }
+
+
+        [Authorize]
+        [HttpGet("delete_provider/{prov_name}")]
+        public async Task<IActionResult> DeleteProvider([FromRoute] String prov_name)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            await _context.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM Providers WHERE Providers.prov_name = {prov_name}");
+
+            return Ok();
+        }
+
+        [Authorize]
+        [HttpPost("add_provider")]
+        [Consumes("application/json")]
+        public async Task<IActionResult> ProviderRegister(ProviderIn provider)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            await _context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Providers VALUES ({provider.prov_name}, {provider.contact_number}, {provider.site_link});");
+            return Ok();
+        }
+
+        #endregion
+
+        #region Items
+
+        [Authorize]
+        [HttpGet("get_all_items")]
+        public async Task<IActionResult> GetAllItems()
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var items = await _context.ItemsOut.FromSqlRaw("SELECT id_item, cost, prov_name, name FROM Items").ToListAsync();
+
+            return Ok(items);
+        }
+
+
+        [Authorize]
+        [HttpGet("delete_item/{item_id}")]
+        public async Task<IActionResult> DeleteItem([FromRoute] int item_id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            await _context.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM Items WHERE Items.item_id = {item_id}");
+
+            return Ok();
+        }
+
+        [Authorize]
+        [HttpPost("add_item")]
+        [Consumes("application/json")]
+        public async Task<IActionResult> ItemRegister(ItemIn item)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            await _context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Items VALUES ({null}, {item.cost}, {item.prov_name}, {item.name});");
+            return Ok();
+        }
+
+
+        #endregion
+
+        #region Courses
+
+        [Authorize]
+        [HttpGet("get_all_courses")]
+        public async Task<IActionResult> GetAllCourses()
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var courses_items = await _context.Course_items.FromSqlRaw("SELECT Courses.name_course, Items.id_item, Items.name FROM Courses, Course_items, Items WHERE Courses.name_course = Course_items.name_course AND Course_items.id_item = Items.id_item").ToListAsync();
+
+            List<CourseOut> courses = new List<CourseOut>();
+
+            foreach (Course_items course in courses_items)
+            {
+                var foundObj = courses.Find(elem => elem.name_course == course.name_course);
+                if (foundObj != null)
+                {
+                    foundObj.items.Add(new ItemForCourse(course.id_item, course.name));
+                }
+                else
+                {
+                    courses.Add(new CourseOut(course));
+                }
+            }
+            return Ok(courses);
+        }
+
+
+        [Authorize]
+        [HttpGet("delete_course/{name_course}")]
+        public async Task<IActionResult> DeleteCourse([FromRoute] String name_course)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            await _context.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM Courses WHERE Courses.name_course = {name_course}");
+
+            return Ok();
+        }
+
+        [Authorize]
+        [HttpPost("add_course")]
+        [Consumes("application/json")]
+        public async Task<IActionResult> CourseRegister(CourseIn course)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            await _context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Courses VALUES ({course.name_course});");
+            foreach (ItemForCourseIn item in course.id_item)
+            {
+                await _context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Course_items VALUES ({null}, {course.name_course}, {item.id_item});");
             }
             return Ok();
         }
