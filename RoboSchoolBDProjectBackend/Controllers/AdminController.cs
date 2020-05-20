@@ -13,6 +13,8 @@ using RoboSchoolBDProjectBackend.Models.Teacher;
 using RoboSchoolBDProjectBackend.Models.OutObjects;
 using RoboSchoolBDProjectBackend.Models.Admin;
 using RoboSchoolBDProjectBackend.Models.OutObjects.Course;
+using RoboSchoolBDProjectBackend.Models.OutObjects.ComplexObjDB;
+using RoboSchoolBDProjectBackend.Models.OutObjects.Request;
 
 namespace RoboSchoolBDProjectBackend.Controllers
 {
@@ -154,7 +156,7 @@ namespace RoboSchoolBDProjectBackend.Controllers
                 var foundObj = schools.Find(elem => elem.id_school == school.id_school);
                 if (foundObj != null)
                 {
-                    foundObj.items.Add(new ItemForSchool(school.id_item, school.name, school.items_num));
+                    foundObj.items.Add(new ItemForRequest(school.id_item, school.name, school.items_num));
                 }
                 else
                 {
@@ -339,6 +341,50 @@ namespace RoboSchoolBDProjectBackend.Controllers
             {
                 await _context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Course_items VALUES ({null}, {course.name_course}, {item.id_item});");
             }
+            return Ok();
+        }
+        #endregion
+
+        #region Courses
+
+        [Authorize]
+        [HttpGet("get_all_requests")]
+        public async Task<IActionResult> GetAllRequests()
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var requests_items = await _context.Request_items.FromSqlRaw("SELECT Requests.id_request, Requests.date, Requests.confirmed, Requests.date_confirmed, Requests.finished, Requests.date_finished, Requests.id_teacher, Requests.id_manager, Items.id_item, Items.name, Request_items.items_num FROM Requests, Request_items, Items WHERE Requests.id_request = Request_items.id_request AND Request_items.id_item = Items.id_item").ToListAsync();
+
+            List<RequestOut> requests = new List<RequestOut>();
+
+            foreach (Request_items request in requests_items)
+            {
+                var foundObj = requests.Find(elem => elem.id_request == request.id_request);
+                if (foundObj != null)
+                {
+                    foundObj.items.Add(new ItemForRequest(request.id_item, request.name, request.items_num));
+                }
+                else
+                {
+                    requests.Add(new RequestOut(request));
+                }
+            }
+            return Ok(requests);
+        }
+
+
+      //  [Authorize]
+        [HttpGet("delete_request/{id_request}")]
+        public async Task<IActionResult> DeleteRequest([FromRoute] int id_request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            await _context.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM Requests WHERE Requests.id_request = {id_request}");
+
             return Ok();
         }
         #endregion

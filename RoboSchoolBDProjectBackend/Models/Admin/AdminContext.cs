@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using RoboSchoolBDProjectBackend.Models.Admin;
 using RoboSchoolBDProjectBackend.Models.OutObjects;
+using RoboSchoolBDProjectBackend.Models.OutObjects.ComplexObjDB;
 
 namespace RoboSchoolBDProjectBackend.Models
 {
@@ -10,6 +11,7 @@ namespace RoboSchoolBDProjectBackend.Models
 
         public DbSet<School_items> School_items { get; set; }
         public DbSet<Course_items> Course_items { get; set; }
+        public DbSet<Request_items> Request_items { get; set; }
 
         public DbSet<TeacherOut> TeachersOut { get; set; }
         public DbSet<ProviderOut> ProvidersOut { get; set; }

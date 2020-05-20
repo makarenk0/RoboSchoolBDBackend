@@ -3,18 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace RoboSchoolBDProjectBackend.Models.OutObjects
+namespace RoboSchoolBDProjectBackend.Models.OutObjects.Request
 {
-    public class ItemForRequest
+    public class ItemForRequestOut
     {
-        public ItemForRequest(int Id_item, String Name, int Items_num)
+
+        public ItemForRequestOut(int Id_item, String Name, int amount)
         {
             id_item = Id_item;
             name = Name;
-            items_num = Items_num;
         }
         public int id_item { get; set; }
         public String name { get; set; }
-        public int items_num { get; set; }
+        public int amount { get; set; }
     }
 }

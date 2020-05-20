@@ -20,8 +20,8 @@ namespace RoboSchoolBDProjectBackend.Models.Admin
             aud_number = school_items.aud_number;
             id_teacher = school_items.id_teacher;
             id_manager = school_items.id_manager;
-            items = new List<ItemForSchool>();
-            items.Add(new ItemForSchool(school_items.id_item, school_items.name, school_items.items_num));
+            items = new List<ItemForRequest>();
+            items.Add(new ItemForRequest(school_items.id_item, school_items.name, school_items.items_num));
         }
 
        
@@ -33,7 +33,7 @@ namespace RoboSchoolBDProjectBackend.Models.Admin
         public int id_manager { get; set; }
         
        
-        public List<ItemForSchool> items { get; set; }
+        public List<ItemForRequest> items { get; set; }
 }
 
     
