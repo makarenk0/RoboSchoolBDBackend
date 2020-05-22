@@ -11,10 +11,14 @@ using RoboSchoolBDProjectBackend.Models;
 using RoboSchoolBDProjectBackend.Tools;
 using RoboSchoolBDProjectBackend.Models.Teacher;
 using RoboSchoolBDProjectBackend.Models.OutObjects;
-using RoboSchoolBDProjectBackend.Models.Admin;
 using RoboSchoolBDProjectBackend.Models.OutObjects.Course;
-using RoboSchoolBDProjectBackend.Models.OutObjects.ComplexObjDB;
 using RoboSchoolBDProjectBackend.Models.OutObjects.Request;
+using RoboSchoolBDProjectBackend.Models.IO_Objects.Manager;
+using RoboSchoolBDProjectBackend.DataBaseModel;
+using RoboSchoolBDProjectBackend.Models.IO_Objects.Teacher;
+using RoboSchoolBDProjectBackend.Models.IO_Objects.School;
+using RoboSchoolBDProjectBackend.Models.IO_Objects.Provider;
+using RoboSchoolBDProjectBackend.Models.IO_Objects.Item;
 
 namespace RoboSchoolBDProjectBackend.Controllers
 {
@@ -52,13 +56,19 @@ namespace RoboSchoolBDProjectBackend.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var managers = await _context.ManagersOut.FromSqlRaw("SELECT id_manager, name, surname, lastname, email FROM Managers").ToListAsync();
+            var managers = await _context.Managers.FromSqlRaw("SELECT id_manager, name, surname, lastname, email FROM Managers").ToListAsync();
             //var a = User.Identity.Name;  know who
             if (managers == null)
             {
                 return NotFound();
             }
-            return Ok(managers);
+
+            List<ManagerOut> result = new List<ManagerOut>();
+            foreach(Managers manager in managers)
+            {
+                result.Add(new ManagerOut(manager));
+            }
+            return Ok(result);
         }
 
         [Authorize]
@@ -99,13 +109,19 @@ namespace RoboSchoolBDProjectBackend.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var teachers = await _context.TeachersOut.FromSqlRaw("SELECT id_teacher, name, surname, lastname, email, work_begin, work_exp FROM Teachers").ToListAsync();
+            var teachers = await _context.Teachers.FromSqlRaw("SELECT id_teacher, name, surname, lastname, email, work_begin, work_exp FROM Teachers").ToListAsync();
             //var a = User.Identity.Name;  know who
             if (teachers == null)
             {
                 return NotFound();
             }
-            return Ok(teachers);
+
+            List<TeacherOut> result = new List<TeacherOut>();
+            foreach (Teachers teacher in teachers)
+            {
+                result.Add(new TeacherOut(teacher));
+            }
+            return Ok(result);
         }
 
         [Authorize]
@@ -147,24 +163,15 @@ namespace RoboSchoolBDProjectBackend.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var schools_items = await _context.School_items.FromSqlRaw("SELECT Schools.id_school, Schools.adress, Schools.open_date, Schools.aud_number, Schools.id_teacher, Schools.id_manager, Items.id_item, Items.name, School_items.items_num FROM Schools, School_items, Items WHERE Schools.id_school = School_items.id_school AND School_items.id_item = Items.id_item").ToListAsync();
-            
-            List<SchoolOut> schools = new List<SchoolOut>();
+            var schools = await _context.Schools.Include(s => s.items)
+                                                .ThenInclude(i => i.Item).ToListAsync();   //"SELECT Schools.id_school, Schools.adress, Schools.open_date, Schools.aud_number, Schools.id_teacher, Schools.id_manager, Items.id_item, Items.name, School_items.items_num FROM Schools, School_items, Items WHERE Schools.id_school = School_items.id_school AND School_items.id_item = Items.id_item").ToListAsync();
 
-            foreach (School_items school in schools_items)
+            List<SchoolOut> result = new List<SchoolOut>();
+            foreach (Schools school in schools)
             {
-                var foundObj = schools.Find(elem => elem.id_school == school.id_school);
-                if (foundObj != null)
-                {
-                    foundObj.items.Add(new ItemForRequest(school.id_item, school.name, school.items_num));
-                }
-                else
-                {
-                    schools.Add(new SchoolOut(school));
-                }
+                result.Add(new SchoolOut(school));
             }
-
-            return Ok(schools);
+            return Ok(result);
         }
 
 
@@ -205,9 +212,13 @@ namespace RoboSchoolBDProjectBackend.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var providers = await _context.ProvidersOut.FromSqlRaw("SELECT prov_name, contact_number, site_link FROM Providers").ToListAsync();
-            
-            return Ok(providers);
+            var providers = await _context.Providers.FromSqlRaw("SELECT prov_name, contact_number, site_link FROM Providers").ToListAsync();
+            List<ProviderOut> result = new List<ProviderOut>();
+            foreach (Providers provider in providers)
+            {
+                result.Add(new ProviderOut(provider));
+            }
+            return Ok(result);
         }
 
 
@@ -249,9 +260,13 @@ namespace RoboSchoolBDProjectBackend.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var items = await _context.ItemsOut.FromSqlRaw("SELECT id_item, cost, prov_name, name FROM Items").ToListAsync();
-
-            return Ok(items);
+            var items = await _context.Items.FromSqlRaw("SELECT id_item, cost, prov_name, name FROM Items").ToListAsync();
+            List<ItemOut> result = new List<ItemOut>();
+            foreach (Items item in items)
+            {
+                result.Add(new ItemOut(item));
+            }
+            return Ok(result);
         }
 
 
@@ -294,23 +309,15 @@ namespace RoboSchoolBDProjectBackend.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var courses_items = await _context.Course_items.FromSqlRaw("SELECT Courses.name_course, Items.id_item, Items.name FROM Courses, Course_items, Items WHERE Courses.name_course = Course_items.name_course AND Course_items.id_item = Items.id_item").ToListAsync();
+            var courses = await _context.Courses.Include(c => c.items)
+                                                .ThenInclude(i => i.Item).ToListAsync();     //("SELECT Courses.name_course, Items.id_item, Items.name FROM Courses, Course_items, Items WHERE Courses.name_course = Course_items.name_course AND Course_items.id_item = Items.id_item").ToListAsync();
 
-            List<CourseOut> courses = new List<CourseOut>();
-
-            foreach (Course_items course in courses_items)
+            List<CourseOut> result = new List<CourseOut>();
+            foreach(Courses course in courses)
             {
-                var foundObj = courses.Find(elem => elem.name_course == course.name_course);
-                if (foundObj != null)
-                {
-                    foundObj.items.Add(new ItemForCourse(course.id_item, course.name));
-                }
-                else
-                {
-                    courses.Add(new CourseOut(course));
-                }
+                result.Add(new CourseOut(course));
             }
-            return Ok(courses);
+            return Ok(result);
         }
 
 
@@ -345,7 +352,7 @@ namespace RoboSchoolBDProjectBackend.Controllers
         }
         #endregion
 
-        #region Courses
+        #region Requests
 
         [Authorize]
         [HttpGet("get_all_requests")]
@@ -355,27 +362,19 @@ namespace RoboSchoolBDProjectBackend.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var requests_items = await _context.Request_items.FromSqlRaw("SELECT Requests.id_request, Requests.date, Requests.confirmed, Requests.date_confirmed, Requests.finished, Requests.date_finished, Requests.id_teacher, Requests.id_manager, Items.id_item, Items.name, Request_items.items_num FROM Requests, Request_items, Items WHERE Requests.id_request = Request_items.id_request AND Request_items.id_item = Items.id_item").ToListAsync();
+            var requests = await _context.Requests.Include(r => r.items)
+                                               .ThenInclude(i => i.Item).ToListAsync();//"SELECT Requests.id_request, Requests.date, Requests.confirmed, Requests.date_confirmed, Requests.finished, Requests.date_finished, Requests.id_teacher, Requests.id_manager, Items.id_item, Items.name, Request_items.items_num FROM Requests, Request_items, Items WHERE Requests.id_request = Request_items.id_request AND Request_items.id_item = Items.id_item").ToListAsync();
 
-            List<RequestOut> requests = new List<RequestOut>();
-
-            foreach (Request_items request in requests_items)
+            List<RequestOut> result = new List<RequestOut>();
+            foreach (Requests request in requests)
             {
-                var foundObj = requests.Find(elem => elem.id_request == request.id_request);
-                if (foundObj != null)
-                {
-                    foundObj.items.Add(new ItemForRequest(request.id_item, request.name, request.items_num));
-                }
-                else
-                {
-                    requests.Add(new RequestOut(request));
-                }
+                result.Add(new RequestOut(request));
             }
-            return Ok(requests);
+            return Ok(result);
         }
 
 
-      //  [Authorize]
+        [Authorize]
         [HttpGet("delete_request/{id_request}")]
         public async Task<IActionResult> DeleteRequest([FromRoute] int id_request)
         {

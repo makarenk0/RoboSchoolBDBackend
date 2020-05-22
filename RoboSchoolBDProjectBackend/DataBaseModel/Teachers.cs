@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace RoboSchoolBDProjectBackend.Models.OutObjects
+namespace RoboSchoolBDProjectBackend.DataBaseModel
 {
-    public class TeacherOut
+    public class Teachers
     {
         [Key]
         public int id_teacher { get; set; }

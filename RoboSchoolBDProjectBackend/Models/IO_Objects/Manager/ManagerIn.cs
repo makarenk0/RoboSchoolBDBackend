@@ -1,14 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace RoboSchoolBDProjectBackend.Models
 {
     public class ManagerIn
-    {
-        
+    {  
         public String name { get; set; }
         public String surname { get; set; }
         public String lastname { get; set; }
@@ -16,7 +11,5 @@ namespace RoboSchoolBDProjectBackend.Models
         public String Password_temp { get; set; }
         public String hash { get; set; }
         public String salt { get; set; }
-
-    
     }
 }

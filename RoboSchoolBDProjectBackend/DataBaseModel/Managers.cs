@@ -4,9 +4,9 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace RoboSchoolBDProjectBackend.Models
+namespace RoboSchoolBDProjectBackend.DataBaseModel
 {
-    public class ManagerOut
+    public class Managers
     {
         [Key]
         public int id_manager { get; set; }

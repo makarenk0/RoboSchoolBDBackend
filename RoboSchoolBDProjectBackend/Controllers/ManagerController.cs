@@ -45,7 +45,7 @@ namespace RoboSchoolBDProjectBackend.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var manager = await _context.ManagersOut.FromSqlInterpolated($"SELECT id_manager, name, surname, lastname, email FROM Managers WHERE Managers.id_manager = {id}").ToListAsync();
+            var manager = await _context.Managers.FromSqlInterpolated($"SELECT id_manager, name, surname, lastname, email FROM Managers WHERE Managers.id_manager = {id}").ToListAsync();
 
             if(manager == null)
             {

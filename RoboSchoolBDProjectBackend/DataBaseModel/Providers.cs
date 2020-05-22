@@ -4,9 +4,9 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace RoboSchoolBDProjectBackend.Models.OutObjects
+namespace RoboSchoolBDProjectBackend.DataBaseModel
 {
-    public class ProviderOut
+    public class Providers
     {
         [Key]
         public String prov_name { get; set; }
