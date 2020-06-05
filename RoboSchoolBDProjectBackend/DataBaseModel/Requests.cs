@@ -14,6 +14,7 @@ namespace RoboSchoolBDProjectBackend.DataBaseModel
         [Key]
         public int id_request { get; set; }
         public DateTime date { get; set; }
+        public int sum { get; set; }
         public bool confirmed { get; set; }
         public DateTime? date_confirmed { get; set; }
         public bool finished { get; set; }

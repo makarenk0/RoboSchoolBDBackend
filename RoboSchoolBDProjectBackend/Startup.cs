@@ -14,6 +14,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using RoboSchoolBDProjectBackend.Models;
+using RoboSchoolBDProjectBackend.Models.Teacher;
 using RoboSchoolBDProjectBackend.Tools;
 
 namespace RoboSchoolBDProjectBackend
@@ -67,6 +68,9 @@ namespace RoboSchoolBDProjectBackend
             options.UseMySql(Configuration.GetConnectionString("RoboSchoolDatabase")));
 
             services.AddDbContext<AdminContext>(options =>
+           options.UseMySql(Configuration.GetConnectionString("RoboSchoolDatabase")));
+
+            services.AddDbContext<TeacherContext>(options =>
            options.UseMySql(Configuration.GetConnectionString("RoboSchoolDatabase")));
 
             services.AddMvc(option => option.EnableEndpointRouting = true)

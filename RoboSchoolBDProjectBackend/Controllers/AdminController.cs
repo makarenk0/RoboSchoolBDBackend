@@ -363,7 +363,7 @@ namespace RoboSchoolBDProjectBackend.Controllers
                 return BadRequest(ModelState);
             }
             var requests = await _context.Requests.Include(r => r.items)
-                                               .ThenInclude(i => i.Item).ToListAsync();//"SELECT Requests.id_request, Requests.date, Requests.confirmed, Requests.date_confirmed, Requests.finished, Requests.date_finished, Requests.id_teacher, Requests.id_manager, Items.id_item, Items.name, Request_items.items_num FROM Requests, Request_items, Items WHERE Requests.id_request = Request_items.id_request AND Request_items.id_item = Items.id_item").ToListAsync();
+                                               .ThenInclude(i => i.Item).ToListAsync();   //"SELECT Requests.id_request, Requests.date, Requests.confirmed, Requests.date_confirmed, Requests.finished, Requests.date_finished, Requests.id_teacher, Requests.id_manager, Items.id_item, Items.name, Request_items.items_num FROM Requests, Request_items, Items WHERE Requests.id_request = Request_items.id_request AND Request_items.id_item = Items.id_item").ToListAsync();
 
             List<RequestOut> result = new List<RequestOut>();
             foreach (Requests request in requests)
@@ -371,6 +371,42 @@ namespace RoboSchoolBDProjectBackend.Controllers
                 result.Add(new RequestOut(request));
             }
             return Ok(result);
+        }
+
+        [Authorize]
+        [HttpGet("confirm_request/{id_request}")]
+        public async Task<IActionResult> ConfirmRequest([FromRoute] int id_request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            await _context.Database.ExecuteSqlInterpolatedAsync($"UPDATE Requests SET confirmed = {true}, date_confirmed = {DateTime.Now} WHERE Requests.id_request = {id_request}");
+
+            return Ok();
+        }
+
+        [Authorize]
+        [HttpGet("finish_request/{id_request}")]
+        public async Task<IActionResult> FinishRequest([FromRoute] int id_request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            await _context.Database.ExecuteSqlInterpolatedAsync($"UPDATE Requests SET finished = {true}, date_finished = {DateTime.Now} WHERE Requests.id_request = {id_request}");
+
+            var request = await _context.Requests.Where(ar => (ar.id_request == id_request))
+                                                 .Include(r => r.items)
+                                                 .ThenInclude(i => i.Item).ToListAsync();
+
+            RequestOut currentRequest = new RequestOut(request.First());
+
+            foreach (RequestOut.RequestItems item in currentRequest.items)
+            {
+                await _context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO School_items VALUES ({null}, {item.amount}, {DateTime.Now}, {get_schoolId_from_teacherId(currentRequest.Teacher_id)} ,{item.id_item});");
+            }
+            return Ok();
         }
 
 
@@ -386,6 +422,16 @@ namespace RoboSchoolBDProjectBackend.Controllers
 
             return Ok();
         }
+        #endregion
+
+        # region Utilities
+        private int get_schoolId_from_teacherId(int teacherId)
+        {
+            var schoolId = _context.Schools.FromSqlInterpolated($"SELECT * FROM Schools WHERE id_teacher = {teacherId}").ToList();
+            return schoolId.First().id_school;
+        }
+
+
         #endregion
 
     }

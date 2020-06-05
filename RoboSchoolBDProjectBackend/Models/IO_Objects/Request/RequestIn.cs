@@ -7,8 +7,6 @@ namespace RoboSchoolBDProjectBackend.Models.OutObjects.Request
 {
     public class RequestIn
     {
-        public List<ItemForRequestIn> id_item { get; set; }  //items
-
-       
+        public List<ItemForRequestIn> items { get; set; }  //items
     }
 }

@@ -10,13 +10,13 @@ namespace RoboSchoolBDProjectBackend.Models.IO_Objects.Teacher
     {
         public TeacherOut(Teachers teacher)
         {
-            Id = teacher.id_teacher;
+            Id_teacher = teacher.id_teacher;
             Name = teacher.name;
             Surname = teacher.surname;
             Lastname = teacher.lastname;
             Email = teacher.email;
         }
-        public int Id { get; set; }
+        public int Id_teacher { get; set; }
         public String Name { get; set; }
         public String Surname { get; set; }
         public String Lastname { get; set; }

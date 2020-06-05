@@ -9,10 +9,12 @@ using Microsoft.EntityFrameworkCore;
 using RoboSchoolBDProjectBackend.DataBaseModel;
 using RoboSchoolBDProjectBackend.Models;
 using RoboSchoolBDProjectBackend.Models.IO_Objects.Group;
+using RoboSchoolBDProjectBackend.Models.IO_Objects.Item;
 using RoboSchoolBDProjectBackend.Models.IO_Objects.Provider;
 using RoboSchoolBDProjectBackend.Models.IO_Objects.School;
 using RoboSchoolBDProjectBackend.Models.OutObjects.Course;
 using RoboSchoolBDProjectBackend.Models.OutObjects.Request;
+using RoboSchoolBDProjectBackend.Models.Teacher;
 using RoboSchoolBDProjectBackend.Tools;
 
 namespace RoboSchoolBDProjectBackend.Controllers
@@ -20,12 +22,11 @@ namespace RoboSchoolBDProjectBackend.Controllers
     [Route("api/[controller]")]
     [EnableCors]
     [ApiController]
-    public class ManagerController : ControllerBase
+    public class TeacherController : ControllerBase
     {
+        private TeacherContext _context;
 
-        private ManagerContext _context;
-
-        public ManagerController(ManagerContext context)
+        public TeacherController(TeacherContext context)
         {
             _context = context;
         }
@@ -34,46 +35,46 @@ namespace RoboSchoolBDProjectBackend.Controllers
         [Consumes("application/json")]
         public IActionResult Token(SignInForm form)
         {
-            var manager = _context.HashSalts.FromSqlInterpolated($"SELECT hash, salt FROM Managers WHERE Managers.email = {form.Login}").ToList();
-            if (manager == null){ return BadRequest(new { errorText = "Invalid username" }); }
-            
+            var manager = _context.HashSalts.FromSqlInterpolated($"SELECT hash, salt FROM Teachers WHERE Teachers.email = {form.Login}").ToList();
+            if (manager == null) { return BadRequest(new { errorText = "Invalid username" }); }
+
             var response = AuthenticationManager.Response(form, manager.First());
-            if (response == null){ return BadRequest(new { errorText = "Invalid password" }); }
+            if (response == null) { return BadRequest(new { errorText = "Invalid password" }); }
 
             return Ok(response);
         }
-           
 
+        [Authorize]
         [HttpGet("get")]
-        public async Task<IActionResult> GetManager()
+        public async Task<IActionResult> GetTeacher()
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
             String email = User.Identity.Name;
-            var manager = await _context.Managers.FromSqlInterpolated($"SELECT id_manager, name, surname, lastname, email FROM Managers WHERE Managers.email = {email}").ToListAsync();
-            // TO DO : load in ManagerOut
-            if(manager == null)
+            var teacher = await _context.Teachers.FromSqlInterpolated($"SELECT * FROM Teachers WHERE Teachers.email = {email}").ToListAsync();
+            // TO DO : load in TeacherOut
+            if (teacher == null)
             {
                 return NotFound();
             }
-            return Ok(manager.First());
+            return Ok(teacher.First());
         }
 
 
         #region Groups
         [Authorize]
-        [HttpGet("get_manager_groups")]
-        public async Task<IActionResult> GetManagerGroups()
+        [HttpGet("get_teacher_groups")]
+        public async Task<IActionResult> GetTeacherGroups()
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            int schoolId = get_schoolId_from_ManagerEmail(User.Identity.Name);
+            int schoolId = get_schoolId_from_TeacherEmail(User.Identity.Name);
             var groups = await _context.Groups.FromSqlRaw($"SELECT `Groups`.id_group, `Groups`.pupils_num, `Groups`.name_course, `Groups`.id_school FROM `Groups`, Schools WHERE `Groups`.id_school = Schools.id_school AND Schools.id_school = {schoolId}").ToListAsync();
-            
+
             if (groups == null)
             {
                 return NotFound();
@@ -86,45 +87,19 @@ namespace RoboSchoolBDProjectBackend.Controllers
             }
             return Ok(result);
         }
-
-        [Authorize]
-        [HttpGet("delete_group/{id}")]
-        public async Task<IActionResult> DeleteGroup([FromRoute] int id)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-            await _context.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM `Groups` WHERE `Groups`.id_group = {id}");
-
-            return Ok();
-        }
-
-        [Authorize]
-        [HttpPost("add_group")]
-        [Consumes("application/json")]
-        public async Task<IActionResult> GroupRegister(GroupIn group)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }  
-            await _context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO `Groups` VALUES ({null}, {group.pupils_number}, {group.name_course}, {get_schoolId_from_ManagerEmail(User.Identity.Name)});");
-            return Ok();
-        }
         #endregion
 
         #region Items
         [Authorize]
-        [HttpGet("get_manager_items")]
-        public async Task<IActionResult> GetAllItems()
+        [HttpGet("get_teacher_items")]
+        public async Task<IActionResult> GetTeacherItems()
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            int schoolId = get_schoolId_from_ManagerEmail(User.Identity.Name);
-            
+            int schoolId = get_schoolId_from_TeacherEmail(User.Identity.Name);
+
             var schools = await _context.Schools.Where(sc => (sc.id_school == schoolId)).Include(s => s.items)
                                                 .ThenInclude(i => i.Item).ToListAsync();
 
@@ -133,22 +108,25 @@ namespace RoboSchoolBDProjectBackend.Controllers
             {
                 result.Add(new SchoolOut.SchoolItems(school_items.id_school_items, school_items.id_item, school_items.Item.cost, school_items.items_num, school_items.Item.name));
             }
-            
+
             return Ok(result);
         }
 
-
         [Authorize]
-        [HttpGet("delete_item/{id_school_items}")]
-        public async Task<IActionResult> DeleteItem([FromRoute] int id_school_items)
+        [HttpGet("get_all_items")]
+        public async Task<IActionResult> GetAllItems()
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            await _context.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM School_items WHERE School_items.id_school_items = {id_school_items}");
-
-            return Ok();
+            var items = await _context.Items.FromSqlRaw("SELECT id_item, cost, prov_name, name FROM Items").ToListAsync();
+            List<ItemOut> result = new List<ItemOut>();
+            foreach (Items item in items)
+            {
+                result.Add(new ItemOut(item));
+            }
+            return Ok(result);
         }
         #endregion
 
@@ -175,14 +153,14 @@ namespace RoboSchoolBDProjectBackend.Controllers
 
         #region Requests
         [Authorize]
-        [HttpGet("get_manager_requests")]
-        public async Task<IActionResult> GetAllRequests()
+        [HttpGet("get_teacher_requests")]
+        public async Task<IActionResult> GetTeacherRequests()
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            var requests = await _context.Requests.Where(req =>(req.id_manager == get_managerId_from_ManagerEmail(User.Identity.Name))).Include(r => r.items)
+            var requests = await _context.Requests.Where(req => (req.id_teacher == get_teacherId_from_TeacherEmail(User.Identity.Name))).Include(r => r.items)
                                                .ThenInclude(i => i.Item).ToListAsync();   //"SELECT Requests.id_request, Requests.date, Requests.confirmed, Requests.date_confirmed, Requests.finished, Requests.date_finished, Requests.id_teacher, Requests.id_manager, Items.id_item, Items.name, Request_items.items_num FROM Requests, Request_items, Items WHERE Requests.id_request = Request_items.id_request AND Request_items.id_item = Items.id_item").ToListAsync();
             List<RequestOut> result = new List<RequestOut>();
             foreach (Requests request in requests)
@@ -192,40 +170,33 @@ namespace RoboSchoolBDProjectBackend.Controllers
             return Ok(result);
         }
 
-
         [Authorize]
-        [HttpGet("confirm_request/{id_request}")]
-        public async Task<IActionResult> ConfirmRequest([FromRoute] int id_request)
+        [HttpPost("add_request")]
+        [Consumes("application/json")]
+        public async Task<IActionResult> RequestRegister(RequestIn request)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            await _context.Database.ExecuteSqlInterpolatedAsync($"UPDATE Requests SET confirmed = {true}, date_confirmed = {DateTime.Now} WHERE Requests.id_request = {id_request}");
+            // TO DO count sum of items
 
-            return Ok();
-        }
+            Requests requests = new Requests();
+            requests.date = DateTime.Now;
+            requests.sum = 100;
+            requests.id_teacher = get_teacherId_from_TeacherEmail(User.Identity.Name);
+            requests.id_manager = get_managerId_from_TeacherEmail(User.Identity.Name);
+            
+            //var requestId = await _context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Requests VALUES ({null}, {DateTime.Now}, {100}, {false}, {null}, {false}, {null}, {get_teacherId_from_TeacherEmail(User.Identity.Name)}, {get_managerId_from_TeacherEmail(User.Identity.Name)});");
+            _context.Requests.Add(requests);
+            _context.SaveChanges();
 
-        [Authorize]
-        [HttpGet("finish_request/{id_request}")]
-        public async Task<IActionResult> FinishRequest([FromRoute] int id_request)
-        {
-            if (!ModelState.IsValid)
+
+            foreach (ItemForRequestIn ifr in request.items)
             {
-                return BadRequest(ModelState);
+                await _context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Request_items VALUES ({null}, {requests.id_request}, {ifr.id_item}, {ifr.amount} );");
             }
-            await _context.Database.ExecuteSqlInterpolatedAsync($"UPDATE Requests SET finished = {true}, date_finished = {DateTime.Now} WHERE Requests.id_request = {id_request}");
 
-            var request = await _context.Requests.Where(ar => (ar.id_request == id_request))
-                                                 .Include(r => r.items)
-                                                 .ThenInclude(i => i.Item).ToListAsync();
-
-            RequestOut currentRequest = new RequestOut(request.First());
-
-            foreach (RequestOut.RequestItems item in currentRequest.items)
-            {
-                await _context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO School_items VALUES ({null}, {item.amount}, {DateTime.Now}, {get_schoolId_from_ManagerEmail(User.Identity.Name)} ,{item.id_item});");
-            }
             return Ok();
         }
         #endregion
@@ -251,21 +222,38 @@ namespace RoboSchoolBDProjectBackend.Controllers
         #endregion
 
         #region Utilities
-        private int get_schoolId_from_ManagerEmail(String email)
+        private int get_schoolId_from_TeacherEmail(String email)
         {
-            var schoolId = _context.Schools.FromSqlInterpolated($"SELECT Schools.id_school, Schools.adress, Schools.open_date, Schools.aud_number, Schools.id_manager, Schools.id_teacher FROM Schools, Managers WHERE Schools.id_manager = Managers.id_manager AND Managers.email = {email}").ToList();
-            return schoolId.First().id_school;
+            var school = _context.Schools.FromSqlInterpolated($"SELECT Schools.id_school, Schools.adress, Schools.open_date, Schools.aud_number, Schools.id_manager, Schools.id_teacher FROM Schools, Teachers WHERE Schools.id_teacher = Teachers.id_teacher AND Teachers.email = {email}").ToList();
+            return school.First().id_school;
         }
 
-        private int get_managerId_from_ManagerEmail(String email)
+        private int get_teacherId_from_TeacherEmail(String email)
         {
-            var managerId = _context.Managers.FromSqlInterpolated($"SELECT * FROM Managers WHERE Managers.email = {email}").ToList();
-            return managerId.First().id_manager;
+            var teacher = _context.Teachers.FromSqlInterpolated($"SELECT * FROM Teachers WHERE Teachers.email = {email}").ToList();
+            return teacher.First().id_teacher;
+        }
+
+        private int get_managerId_from_TeacherEmail(String email)
+        {
+            var school = _context.Schools.FromSqlInterpolated($"SELECT Schools.id_school, Schools.adress, Schools.open_date, Schools.aud_number, Schools.id_manager, Schools.id_teacher FROM Schools, Teachers WHERE Schools.id_teacher = Teachers.id_teacher AND Teachers.email = {email}").ToList();
+            return school.First().id_manager;
+        }
+
+        private class RequestToAdd{
+            public int? id_request;
+            public DateTime date;
+            public int sum;
+            public bool confirmed = false;
+            public DateTime? date_confirmed;
+            public bool finished = false;
+            public DateTime? date_finished;
+            public int id_teacher;
+            public int id_manager;
         }
 
 
         #endregion
-
 
     }
 }
