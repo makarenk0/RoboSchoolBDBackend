@@ -14,6 +14,7 @@ namespace RoboSchoolBDProjectBackend.Models.IO_Objects.School
             Adress = schools.adress;
             Open_date = schools.open_date.ToShortDateString();
             Classrooms_number = schools.aud_number;
+            
             Manager_id = schools.id_manager;
             Teacher_id = schools.id_teacher;
 
@@ -28,8 +29,10 @@ namespace RoboSchoolBDProjectBackend.Models.IO_Objects.School
         public String Adress { get; set; }
         public String Open_date { get; set; }
         public int Classrooms_number { get; set; }
+        
         public int Manager_id { get; set; }
         public int Teacher_id { get; set; }
+
         public List<SchoolItems> items { get; set; }
 
 

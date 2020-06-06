@@ -19,6 +19,7 @@ using RoboSchoolBDProjectBackend.Models.IO_Objects.Teacher;
 using RoboSchoolBDProjectBackend.Models.IO_Objects.School;
 using RoboSchoolBDProjectBackend.Models.IO_Objects.Provider;
 using RoboSchoolBDProjectBackend.Models.IO_Objects.Item;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace RoboSchoolBDProjectBackend.Controllers
 {
@@ -38,10 +39,16 @@ namespace RoboSchoolBDProjectBackend.Controllers
         [Consumes("application/json")]
         public IActionResult Token(SignInForm form)
         {
-            var manager = _context.HashSalts.FromSqlInterpolated($"SELECT hash, salt FROM Admin WHERE Admin.email = {form.Login}").ToList();
-            if (manager == null) { return BadRequest(new { errorText = "Invalid username" }); }
 
-            var response = AuthenticationManager.Response(form, manager.First());
+            if (String.IsNullOrWhiteSpace(form.Login) || String.IsNullOrWhiteSpace(form.Password))
+            {
+                return BadRequest(new { errorText = "All fields are required" });
+            }
+
+            var admin = _context.HashSalts.FromSqlInterpolated($"SELECT hash, salt FROM Admin WHERE Admin.email = {form.Login}").ToList();
+            if (admin.Count==0) { return BadRequest(new { errorText = "Invalid username" }); }
+
+            var response = AuthenticationManager.Response(form, admin.First());
             if (response == null) { return BadRequest(new { errorText = "Invalid password" }); }
 
             return Ok(response);
@@ -65,6 +72,29 @@ namespace RoboSchoolBDProjectBackend.Controllers
 
             List<ManagerOut> result = new List<ManagerOut>();
             foreach(Managers manager in managers)
+            {
+                result.Add(new ManagerOut(manager));
+            }
+            return Ok(result);
+        }
+
+        [Authorize]
+        [HttpGet("get_all_free_managers")]
+        public async Task<IActionResult> GetAllFreeManagers()
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var managers = await _context.Managers.FromSqlRaw("SELECT id_manager, name, surname, lastname, email FROM Managers WHERE Managers.id_manager NOT IN (SELECT Schools.id_manager FROM Schools);").ToListAsync();
+            //var a = User.Identity.Name;  know who
+            if (managers == null)
+            {
+                return NotFound();
+            }
+
+            List<ManagerOut> result = new List<ManagerOut>();
+            foreach (Managers manager in managers)
             {
                 result.Add(new ManagerOut(manager));
             }
@@ -110,6 +140,29 @@ namespace RoboSchoolBDProjectBackend.Controllers
                 return BadRequest(ModelState);
             }
             var teachers = await _context.Teachers.FromSqlRaw("SELECT id_teacher, name, surname, lastname, email, work_begin, work_exp FROM Teachers").ToListAsync();
+            //var a = User.Identity.Name;  know who
+            if (teachers == null)
+            {
+                return NotFound();
+            }
+
+            List<TeacherOut> result = new List<TeacherOut>();
+            foreach (Teachers teacher in teachers)
+            {
+                result.Add(new TeacherOut(teacher));
+            }
+            return Ok(result);
+        }
+
+        [Authorize]
+        [HttpGet("get_all_free_teachers")]
+        public async Task<IActionResult> GetAllFreeTeachers()
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var teachers = await _context.Teachers.FromSqlRaw("SELECT id_teacher, name, surname, lastname, email, work_begin, work_exp FROM Teachers WHERE Teachers.id_teacher NOT IN (SELECT Schools.id_teacher FROM Schools);").ToListAsync();
             //var a = User.Identity.Name;  know who
             if (teachers == null)
             {
@@ -244,7 +297,7 @@ namespace RoboSchoolBDProjectBackend.Controllers
             {
                 return BadRequest(ModelState);
             }
-            await _context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Providers VALUES ({provider.prov_name}, {provider.contact_number}, {provider.site_link});");
+            await _context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Providers VALUES ({provider.provider_name}, {provider.contact_number}, {provider.site_link});");
             return Ok();
         }
 
@@ -292,7 +345,7 @@ namespace RoboSchoolBDProjectBackend.Controllers
             {
                 return BadRequest(ModelState);
             }
-            await _context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Items VALUES ({null}, {item.cost}, {item.prov_name}, {item.name});");
+            await _context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Items VALUES ({null}, {item.cost}, {item.provider_name}, {item.name});");
             return Ok();
         }
 
@@ -343,8 +396,14 @@ namespace RoboSchoolBDProjectBackend.Controllers
             {
                 return BadRequest(ModelState);
             }
+            foreach(var item in course.items)
+            {
+                if(item.id_item == null) return BadRequest(new { errorText = "Empty item field!" });
+            }
+           
+
             await _context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Courses VALUES ({course.name_course});");
-            foreach (ItemForCourseIn item in course.id_item)
+            foreach (ItemForCourseIn item in course.items)
             {
                 await _context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Course_items VALUES ({null}, {course.name_course}, {item.id_item});");
             }

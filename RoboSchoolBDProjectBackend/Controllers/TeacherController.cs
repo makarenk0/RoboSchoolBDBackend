@@ -35,10 +35,15 @@ namespace RoboSchoolBDProjectBackend.Controllers
         [Consumes("application/json")]
         public IActionResult Token(SignInForm form)
         {
-            var manager = _context.HashSalts.FromSqlInterpolated($"SELECT hash, salt FROM Teachers WHERE Teachers.email = {form.Login}").ToList();
-            if (manager == null) { return BadRequest(new { errorText = "Invalid username" }); }
+            if (String.IsNullOrWhiteSpace(form.Login) || String.IsNullOrWhiteSpace(form.Password))
+            {
+                return BadRequest(new { errorText = "All fields are required" });
+            }
 
-            var response = AuthenticationManager.Response(form, manager.First());
+            var teacher = _context.HashSalts.FromSqlInterpolated($"SELECT hash, salt FROM Teachers WHERE Teachers.email = {form.Login}").ToList();
+            if (teacher.Count == 0) { return BadRequest(new { errorText = "Invalid username" }); }
+
+            var response = AuthenticationManager.Response(form, teacher.First());
             if (response == null) { return BadRequest(new { errorText = "Invalid password" }); }
 
             return Ok(response);
@@ -179,6 +184,12 @@ namespace RoboSchoolBDProjectBackend.Controllers
             {
                 return BadRequest(ModelState);
             }
+            foreach (var item in request.items)
+            {
+                if (item.id_item == null) return BadRequest(new { errorText = "Empty item field!" });
+            }
+
+
             // TO DO count sum of items
 
             Requests requests = new Requests();
@@ -186,8 +197,6 @@ namespace RoboSchoolBDProjectBackend.Controllers
             requests.sum = 100;
             requests.id_teacher = get_teacherId_from_TeacherEmail(User.Identity.Name);
             requests.id_manager = get_managerId_from_TeacherEmail(User.Identity.Name);
-            
-            //var requestId = await _context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Requests VALUES ({null}, {DateTime.Now}, {100}, {false}, {null}, {false}, {null}, {get_teacherId_from_TeacherEmail(User.Identity.Name)}, {get_managerId_from_TeacherEmail(User.Identity.Name)});");
             _context.Requests.Add(requests);
             _context.SaveChanges();
 
@@ -239,20 +248,6 @@ namespace RoboSchoolBDProjectBackend.Controllers
             var school = _context.Schools.FromSqlInterpolated($"SELECT Schools.id_school, Schools.adress, Schools.open_date, Schools.aud_number, Schools.id_manager, Schools.id_teacher FROM Schools, Teachers WHERE Schools.id_teacher = Teachers.id_teacher AND Teachers.email = {email}").ToList();
             return school.First().id_manager;
         }
-
-        private class RequestToAdd{
-            public int? id_request;
-            public DateTime date;
-            public int sum;
-            public bool confirmed = false;
-            public DateTime? date_confirmed;
-            public bool finished = false;
-            public DateTime? date_finished;
-            public int id_teacher;
-            public int id_manager;
-        }
-
-
         #endregion
 
     }

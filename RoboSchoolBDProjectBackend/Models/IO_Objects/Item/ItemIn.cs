@@ -9,7 +9,7 @@ namespace RoboSchoolBDProjectBackend.Models.OutObjects
     {
 
         public String name { get; set; }
-        public String prov_name { get; set; }
+        public String provider_name { get; set; }
 
         
         public int cost { get; set; }

@@ -7,7 +7,7 @@ namespace RoboSchoolBDProjectBackend.Models.OutObjects.Course
 {
     public class ItemForCourseIn
     {
-        public int id_item { get; set; }
+        public int? id_item { get; set; }
         public int amount { get; set; }
     }
 }

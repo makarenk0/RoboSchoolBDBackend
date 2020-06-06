@@ -34,8 +34,12 @@ namespace RoboSchoolBDProjectBackend.Controllers
         [Consumes("application/json")]
         public IActionResult Token(SignInForm form)
         {
+            if(String.IsNullOrWhiteSpace(form.Login)|| String.IsNullOrWhiteSpace(form.Password))
+            {
+                return BadRequest("All fields are required");
+            }
             var manager = _context.HashSalts.FromSqlInterpolated($"SELECT hash, salt FROM Managers WHERE Managers.email = {form.Login}").ToList();
-            if (manager == null){ return BadRequest(new { errorText = "Invalid username" }); }
+            if (manager.Count == 0){ return BadRequest(new { errorText = "Invalid username" }); }
             
             var response = AuthenticationManager.Response(form, manager.First());
             if (response == null){ return BadRequest(new { errorText = "Invalid password" }); }
