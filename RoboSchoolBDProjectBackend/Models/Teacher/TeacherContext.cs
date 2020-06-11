@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 using RoboSchoolBDProjectBackend.DataBaseModel;
 
 namespace RoboSchoolBDProjectBackend.Models.Teacher
@@ -14,6 +15,7 @@ namespace RoboSchoolBDProjectBackend.Models.Teacher
         public DbSet<Providers> Providers { get; set; }
         public DbSet<Items> Items { get; set; }
 
+        public DbSet<Teacher_phones> Teacher_phones { get; set; }
         public DbSet<School_items> School_items { get; set; }
         public DbSet<Request_items> Request_items { get; set; }
 
@@ -56,6 +58,15 @@ namespace RoboSchoolBDProjectBackend.Models.Teacher
                 .HasOne(ri => ri.Item)
                 .WithMany(i => i.Request_items)
                 .HasForeignKey(ri => ri.id_item);
+
+            modelBuilder.Entity<Teacher_phones>()
+               .HasKey(tph => new { tph.phone_number });
+            modelBuilder.Entity<Teacher_phones>()
+                .HasOne(tph => tph.teacher)
+                .WithMany(t => t.phones)
+                .HasForeignKey(tph => tph.id_teacher);
+
+
         }
     }
 }

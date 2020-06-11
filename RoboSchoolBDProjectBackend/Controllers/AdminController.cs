@@ -19,7 +19,6 @@ using RoboSchoolBDProjectBackend.Models.IO_Objects.Teacher;
 using RoboSchoolBDProjectBackend.Models.IO_Objects.School;
 using RoboSchoolBDProjectBackend.Models.IO_Objects.Provider;
 using RoboSchoolBDProjectBackend.Models.IO_Objects.Item;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace RoboSchoolBDProjectBackend.Controllers
 {
@@ -63,8 +62,10 @@ namespace RoboSchoolBDProjectBackend.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var managers = await _context.Managers.FromSqlRaw("SELECT id_manager, name, surname, lastname, email FROM Managers").ToListAsync();
+            //var managers = await _context.Managers.FromSqlRaw("SELECT id_manager, name, surname, lastname, email FROM Managers").ToListAsync();
             //var a = User.Identity.Name;  know who
+
+            var managers = await _context.Managers.Include(t => t.phones).ToListAsync();
             if (managers == null)
             {
                 return NotFound();
@@ -86,8 +87,7 @@ namespace RoboSchoolBDProjectBackend.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var managers = await _context.Managers.FromSqlRaw("SELECT id_manager, name, surname, lastname, email FROM Managers WHERE Managers.id_manager NOT IN (SELECT Schools.id_manager FROM Schools);").ToListAsync();
-            //var a = User.Identity.Name;  know who
+            var managers = await _context.Managers.FromSqlRaw("SELECT * FROM Managers WHERE Managers.id_manager NOT IN (SELECT Schools.id_manager FROM Schools);").ToListAsync();
             if (managers == null)
             {
                 return NotFound();
@@ -123,9 +123,34 @@ namespace RoboSchoolBDProjectBackend.Controllers
             {
                 return BadRequest(ModelState);
             }
+            foreach (var item in manager.phones)
+            {
+                if (String.IsNullOrEmpty(item.phone_number)) return BadRequest(new { errorText = "Empty phone field!" });
+            }
+
             byte[] salt = PasswordManager.GenerateSalt_128();
             string saltStr = Encoding.ASCII.GetString(salt);
-            await _context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Managers VALUES ({null}, {manager.name}, {manager.surname}, {manager.lastname}, {manager.email}, {PasswordManager.PasswordSaveHashing(manager.Password_temp, salt)} , {saltStr});");
+
+            Managers withId = new Managers();
+            withId.name = manager.name;
+            withId.surname = manager.surname;
+            withId.lastname = manager.lastname;
+            withId.email = manager.email;
+            withId.hash = PasswordManager.PasswordSaveHashing(manager.Password_temp, salt);
+            withId.salt = saltStr;
+            _context.Managers.Add(withId);
+            _context.SaveChanges();
+
+
+            int id = withId.id_manager;
+
+            //await _context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Managers VALUES ({null}, {manager.name}, {manager.surname}, {manager.lastname}, {manager.email}, {PasswordManager.PasswordSaveHashing(manager.Password_temp, salt)} , {saltStr});");
+
+            foreach (Models.PhonesIn phone in manager.phones)
+            {
+                await _context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Manager_phones VALUES ({phone.phone_number}, {id});");
+            }
+
             return Ok();
         }
         #endregion
@@ -139,8 +164,10 @@ namespace RoboSchoolBDProjectBackend.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var teachers = await _context.Teachers.FromSqlRaw("SELECT id_teacher, name, surname, lastname, email, work_begin, work_exp FROM Teachers").ToListAsync();
-            //var a = User.Identity.Name;  know who
+            //var teachers = await _context.Teachers.FromSqlRaw("SELECT id_teacher, name, surname, lastname, email, work_begin, work_exp FROM Teachers").ToListAsync();
+
+
+            var teachers = await _context.Teachers.Include(t => t.phones).ToListAsync();
             if (teachers == null)
             {
                 return NotFound();
@@ -162,8 +189,7 @@ namespace RoboSchoolBDProjectBackend.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var teachers = await _context.Teachers.FromSqlRaw("SELECT id_teacher, name, surname, lastname, email, work_begin, work_exp FROM Teachers WHERE Teachers.id_teacher NOT IN (SELECT Schools.id_teacher FROM Schools);").ToListAsync();
-            //var a = User.Identity.Name;  know who
+            var teachers = await _context.Teachers.FromSqlRaw("SELECT * FROM Teachers WHERE Teachers.id_teacher NOT IN (SELECT Schools.id_teacher FROM Schools);").ToListAsync();
             if (teachers == null)
             {
                 return NotFound();
@@ -199,9 +225,31 @@ namespace RoboSchoolBDProjectBackend.Controllers
             {
                 return BadRequest(ModelState);
             }
+            foreach (var item in teacher.phones)
+            {
+                if (String.IsNullOrEmpty(item.phone_number)) return BadRequest(new { errorText = "Empty phone field!" });
+            }
             byte[] salt = PasswordManager.GenerateSalt_128();
             string saltStr = Encoding.ASCII.GetString(salt);
-            await _context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Teachers VALUES ({null}, {teacher.name}, {teacher.surname}, {teacher.lastname}, {teacher.email},  {DateTime.Now}, {0}, {PasswordManager.PasswordSaveHashing(teacher.Password_temp, salt)} , {saltStr});");
+
+            Teachers withId = new Teachers();
+            withId.name = teacher.name;
+            withId.surname = teacher.surname;
+            withId.lastname = teacher.lastname;
+            withId.email = teacher.email;
+            withId.hash = PasswordManager.PasswordSaveHashing(teacher.Password_temp, salt);
+            withId.salt = saltStr;
+            _context.Teachers.Add(withId);
+            _context.SaveChanges();
+
+
+            int id = withId.id_teacher;
+            foreach (Models.Teacher.PhonesIn phone in teacher.phones)
+            {
+                await _context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Teacher_phones VALUES ({phone.phone_number}, {id});");
+            }
+
+            //await _context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Teachers VALUES ({null}, {teacher.name}, {teacher.surname}, {teacher.lastname}, {teacher.email},  {DateTime.Now}, {0}, {PasswordManager.PasswordSaveHashing(teacher.Password_temp, salt)} , {saltStr});");
             return Ok();
         }
         #endregion
@@ -489,7 +537,6 @@ namespace RoboSchoolBDProjectBackend.Controllers
             var schoolId = _context.Schools.FromSqlInterpolated($"SELECT * FROM Schools WHERE id_teacher = {teacherId}").ToList();
             return schoolId.First().id_school;
         }
-
 
         #endregion
 

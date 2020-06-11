@@ -14,5 +14,9 @@ namespace RoboSchoolBDProjectBackend.DataBaseModel
         public String surname { get; set; }
         public String lastname { get; set; }
         public String email { get; set; }
+        public String hash { get; set; }
+        public String salt { get; set; }
+
+        public virtual ICollection<Manager_phones> phones { get; set; }
     }
 }

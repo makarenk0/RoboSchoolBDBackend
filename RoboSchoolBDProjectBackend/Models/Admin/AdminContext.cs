@@ -13,6 +13,8 @@ namespace RoboSchoolBDProjectBackend.Models
         public DbSet<Schools> Schools { get; set; }
         public DbSet<Requests> Requests { get; set; }
 
+        public DbSet<Teacher_phones> Teacher_phones { get; set; }
+        public DbSet<Manager_phones> Manager_phones { get; set; }
         public DbSet<School_items> School_items { get; set; }
         public DbSet<Request_items> Request_items { get; set; }
 
@@ -57,6 +59,20 @@ namespace RoboSchoolBDProjectBackend.Models
                 .HasOne(ri => ri.Item)
                 .WithMany(i => i.Request_items)
                 .HasForeignKey(ri => ri.id_item);
+
+            modelBuilder.Entity<Teacher_phones>()
+               .HasKey(tph => new { tph.phone_number });
+            modelBuilder.Entity<Teacher_phones>()
+                .HasOne(tph => tph.teacher)
+                .WithMany(t => t.phones)
+                .HasForeignKey(tph => tph.id_teacher);
+
+            modelBuilder.Entity<Manager_phones>()
+                .HasKey(mph => new { mph.phone_number });
+            modelBuilder.Entity<Manager_phones>()
+                .HasOne(mph => mph.manager)
+                .WithMany(m => m.phones)
+                .HasForeignKey(mph => mph.id_manager);
         }
     }
     

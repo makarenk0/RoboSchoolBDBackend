@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using RoboSchoolBDProjectBackend.DataBaseModel;
 using RoboSchoolBDProjectBackend.Models;
 using RoboSchoolBDProjectBackend.Models.IO_Objects.Group;
+using RoboSchoolBDProjectBackend.Models.IO_Objects.Manager;
 using RoboSchoolBDProjectBackend.Models.IO_Objects.Provider;
 using RoboSchoolBDProjectBackend.Models.IO_Objects.School;
 using RoboSchoolBDProjectBackend.Models.OutObjects.Course;
@@ -46,8 +47,8 @@ namespace RoboSchoolBDProjectBackend.Controllers
 
             return Ok(response);
         }
-           
 
+        [Authorize]
         [HttpGet("get")]
         public async Task<IActionResult> GetManager()
         {
@@ -56,13 +57,15 @@ namespace RoboSchoolBDProjectBackend.Controllers
                 return BadRequest(ModelState);
             }
             String email = User.Identity.Name;
-            var manager = await _context.Managers.FromSqlInterpolated($"SELECT id_manager, name, surname, lastname, email FROM Managers WHERE Managers.email = {email}").ToListAsync();
-            // TO DO : load in ManagerOut
-            if(manager == null)
+            var manager = await _context.Managers.FromSqlInterpolated($"SELECT * FROM Managers WHERE Managers.email = {email}").Include(ma => ma.phones).ToListAsync();  //   .Where(m => m.email == email)
+
+            if (manager == null)
             {
                 return NotFound();
             }
-            return Ok(manager.First());
+
+            ManagerOut managerOut = new ManagerOut(manager.First());
+            return Ok(managerOut);
         }
 
 

@@ -12,6 +12,7 @@ using RoboSchoolBDProjectBackend.Models.IO_Objects.Group;
 using RoboSchoolBDProjectBackend.Models.IO_Objects.Item;
 using RoboSchoolBDProjectBackend.Models.IO_Objects.Provider;
 using RoboSchoolBDProjectBackend.Models.IO_Objects.School;
+using RoboSchoolBDProjectBackend.Models.IO_Objects.Teacher;
 using RoboSchoolBDProjectBackend.Models.OutObjects.Course;
 using RoboSchoolBDProjectBackend.Models.OutObjects.Request;
 using RoboSchoolBDProjectBackend.Models.Teacher;
@@ -58,13 +59,14 @@ namespace RoboSchoolBDProjectBackend.Controllers
                 return BadRequest(ModelState);
             }
             String email = User.Identity.Name;
-            var teacher = await _context.Teachers.FromSqlInterpolated($"SELECT * FROM Teachers WHERE Teachers.email = {email}").ToListAsync();
-            // TO DO : load in TeacherOut
+            var teacher = await _context.Teachers.FromSqlInterpolated($"SELECT * FROM Teachers WHERE Teachers.email = {email}").Include(t => t.phones).ToListAsync();
+            
             if (teacher == null)
             {
                 return NotFound();
             }
-            return Ok(teacher.First());
+            TeacherOut teacherOut = new TeacherOut(teacher.First());
+            return Ok(teacherOut);
         }
 
 

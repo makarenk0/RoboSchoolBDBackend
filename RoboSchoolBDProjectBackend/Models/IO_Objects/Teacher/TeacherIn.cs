@@ -14,5 +14,13 @@ namespace RoboSchoolBDProjectBackend.Models.Teacher
         public String Password_temp { get; set; }
         public String hash { get; set; }
         public String salt { get; set; }
+
+        public List<PhonesIn> phones { get; set; }
+    }
+
+    public class PhonesIn
+    {
+        public String phone_number;
+        public int amount;
     }
 }
