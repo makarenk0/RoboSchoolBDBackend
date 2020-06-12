@@ -8,6 +8,7 @@ namespace RoboSchoolBDProjectBackend.Models.OutObjects.Request
     public class ItemForRequestIn
     {
         public int? id_item { get; set; }
+        public int cost { get; set; }
         public int amount { get; set; }
     }
 }

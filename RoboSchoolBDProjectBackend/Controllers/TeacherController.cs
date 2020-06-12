@@ -193,10 +193,16 @@ namespace RoboSchoolBDProjectBackend.Controllers
 
 
             // TO DO count sum of items
+            int sum = 0;
+            var items = await _context.Items.FromSqlRaw("SELECT id_item, cost, prov_name, name FROM Items").ToListAsync();
+            foreach (ItemForRequestIn item in request.items)
+            {
+                sum += items.Where(i => i.id_item == item.id_item).First().cost * item.amount;
+            }
 
             Requests requests = new Requests();
             requests.date = DateTime.Now;
-            requests.sum = 100;
+            requests.sum = sum;
             requests.id_teacher = get_teacherId_from_TeacherEmail(User.Identity.Name);
             requests.id_manager = get_managerId_from_TeacherEmail(User.Identity.Name);
             _context.Requests.Add(requests);

@@ -235,11 +235,23 @@ namespace RoboSchoolBDProjectBackend.Controllers
             }
             return Ok();
         }
-        #endregion
-
-        #region Providers
 
         [Authorize]
+        [HttpGet("reject_request/{id_request}")]
+        public async Task<IActionResult> RejectRequest([FromRoute] int id_request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            await _context.Database.ExecuteSqlInterpolatedAsync($"UPDATE Requests SET date_rejected = {DateTime.Now} WHERE Requests.id_request = {id_request}");
+            return Ok();
+        }
+            #endregion
+
+            #region Providers
+
+            [Authorize]
         [HttpGet("get_all_providers")]
         public async Task<IActionResult> GetAllProviders()
         {

@@ -14,10 +14,12 @@ namespace RoboSchoolBDProjectBackend.Models.OutObjects.Request
         public RequestOut(Requests requests)
         {
             Id = requests.id_request;
+            sum = requests.sum;
             Date = requests.date.ToShortDateString();
             
-            Date_confirmed = requests.date_confirmed!=null ? requests.date_confirmed.Value.ToShortDateString() : "not yet";
+            Date_confirmed = requests.date_confirmed!=null ? requests.date_confirmed.Value.ToShortDateString() : "pending";
             Date_finished = requests.date_finished!=null ? requests.date_finished.Value.ToShortDateString() : "not yet";
+            Date_rejected = requests.date_rejected != null ? requests.date_rejected.Value.ToShortDateString() : "pending";
 
             Teacher_id = requests.id_teacher;
             Manager_id = requests.id_manager;
@@ -29,9 +31,11 @@ namespace RoboSchoolBDProjectBackend.Models.OutObjects.Request
             }
         }
         public int Id { get; set; }
+        public int sum { get; set; }
         public String Date { get; set; }
         public String Date_confirmed { get; set; }
         public String Date_finished { get; set; }
+        public String Date_rejected { get; set; }
 
         public int Teacher_id { get; set; }
         public int Manager_id { get; set; }

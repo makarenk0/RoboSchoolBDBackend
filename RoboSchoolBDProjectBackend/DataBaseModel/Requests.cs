@@ -19,6 +19,7 @@ namespace RoboSchoolBDProjectBackend.DataBaseModel
         public DateTime? date_confirmed { get; set; }
         public bool finished { get; set; }
         public DateTime? date_finished { get; set; }
+        public DateTime? date_rejected { get; set; }
 
         public int id_teacher { get; set; }
         public int id_manager { get; set; }
