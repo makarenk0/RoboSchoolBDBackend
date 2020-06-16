@@ -588,6 +588,42 @@ namespace RoboSchoolBDProjectBackend.Controllers
         }
 
 
+        
+        [HttpGet("requests_with_all_items")]
+        public async Task<IActionResult> RequestsWithAllItems()
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var requestsIds = await _context.Request_items.FromSqlRaw("SELECT DISTINCT id_request_items, id_request, id_item, items_num FROM Request_items AS ri1 WHERE NOT EXISTS( SELECT * FROM Items WHERE NOT EXISTS( SELECT * FROM Request_items AS ri2 WHERE(ri1.id_request = ri2.id_request) AND(ri2.id_item = Items.id_item))); ").ToListAsync();
+
+            List<int> ids = new List<int>();
+            int bufPrev = 0;
+            foreach(Request_items item in requestsIds)
+            {
+                if (bufPrev != item.id_request) {
+                    ids.Add(item.id_request);
+                }
+                bufPrev = item.id_request;
+            }
+
+
+            var requests = await _context.Requests.Where(req=> ids.Contains(req.id_request)).Include(r => r.items)
+                                              .ThenInclude(i => i.Item).ToListAsync();   //"SELECT Requests.id_request, Requests.date, Requests.confirmed, Requests.date_confirmed, Requests.finished, Requests.date_finished, Requests.id_teacher, Requests.id_manager, Items.id_item, Items.name, Request_items.items_num FROM Requests, Request_items, Items WHERE Requests.id_request = Request_items.id_request AND Request_items.id_item = Items.id_item").ToListAsync();
+
+
+            List<RequestOut> result = new List<RequestOut>();
+            foreach (Requests request in requests)
+            {
+                Teachers teacher = get_teacher_from_teacherId(request.id_teacher);
+                Managers manager = get_manager_from_managerId(request.id_manager);
+                result.Add(new RequestOut(request, manager.name + " " + manager.surname + " " + manager.lastname, teacher.name + " " + teacher.surname + " " + teacher.lastname));
+            }
+            return Ok(result);
+        }
+
+
 
 
         [Authorize]
