@@ -527,6 +527,7 @@ namespace RoboSchoolBDProjectBackend.Controllers
             var requests = await _context.Requests.Include(r => r.items)
                                                .ThenInclude(i => i.Item).ToListAsync();   //"SELECT Requests.id_request, Requests.date, Requests.confirmed, Requests.date_confirmed, Requests.finished, Requests.date_finished, Requests.id_teacher, Requests.id_manager, Items.id_item, Items.name, Request_items.items_num FROM Requests, Request_items, Items WHERE Requests.id_request = Request_items.id_request AND Request_items.id_item = Items.id_item").ToListAsync();
 
+
             List<RequestOut> result = new List<RequestOut>();
             foreach (Requests request in requests)
             {
@@ -585,6 +586,44 @@ namespace RoboSchoolBDProjectBackend.Controllers
 
             return Ok();
         }
+
+
+
+
+        [Authorize]
+        [HttpPost("get_requests_with_adress")]
+        public async Task<IActionResult> GetFilterRequests(FilterIn filter)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            List<RequestOut> result;
+            try
+            {
+                var requests = await _context.Requests.Where(req => (req.id_teacher == get_teacherId_from_adress(filter.adress))).Include(r => r.items)
+                                              .ThenInclude(i => i.Item).ToListAsync();
+                if (requests.Count == 0)
+                {
+                    return BadRequest(new { errorText = "No requests in this school" });
+                }
+                result = new List<RequestOut>();
+                foreach (Requests request in requests)
+                {
+                    Teachers teacher = get_teacher_from_teacherId(request.id_teacher);
+                    Managers manager = get_manager_from_managerId(request.id_manager);
+                    result.Add(new RequestOut(request, manager.name + " " + manager.surname + " " + manager.lastname, teacher.name + " " + teacher.surname + " " + teacher.lastname));
+                }
+            }
+            catch(Exception e)
+            {
+                return BadRequest(new { errorText = "No such school" });
+            }
+              //"SELECT Requests.id_request, Requests.date, Requests.confirmed, Requests.date_confirmed, Requests.finished, Requests.date_finished, Requests.id_teacher, Requests.id_manager, Items.id_item, Items.name, Request_items.items_num FROM Requests, Request_items, Items WHERE Requests.id_request = Request_items.id_request AND Request_items.id_item = Items.id_item").ToListAsync();
+
+            
+            return Ok(result);
+        }
         #endregion
 
         # region Utilities
@@ -606,7 +645,13 @@ namespace RoboSchoolBDProjectBackend.Controllers
             return managers.First();
         }
 
-   
+        private int get_teacherId_from_adress(String adress)
+        {
+            var schoolId = _context.Schools.FromSqlInterpolated($"SELECT * FROM Schools WHERE adress = {adress}").ToList();
+            return schoolId.First().id_teacher;
+        }
+
+
 
         #endregion
 
