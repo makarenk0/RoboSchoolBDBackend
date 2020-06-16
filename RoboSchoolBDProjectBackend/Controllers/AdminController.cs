@@ -20,6 +20,7 @@ using RoboSchoolBDProjectBackend.Models.IO_Objects.School;
 using RoboSchoolBDProjectBackend.Models.IO_Objects.Provider;
 using RoboSchoolBDProjectBackend.Models.IO_Objects.Item;
 using System.Globalization;
+using RoboSchoolBDProjectBackend.Models.IO_Objects;
 
 namespace RoboSchoolBDProjectBackend.Controllers
 {
@@ -269,6 +270,31 @@ namespace RoboSchoolBDProjectBackend.Controllers
             }
             var schools = await _context.Schools.Include(s => s.items)
                                                 .ThenInclude(i => i.Item).ToListAsync();   //"SELECT Schools.id_school, Schools.adress, Schools.open_date, Schools.aud_number, Schools.id_teacher, Schools.id_manager, Items.id_item, Items.name, School_items.items_num FROM Schools, School_items, Items WHERE Schools.id_school = School_items.id_school AND School_items.id_item = Items.id_item").ToListAsync();
+
+            List<SchoolOut> result = new List<SchoolOut>();
+            foreach (Schools school in schools)
+            {
+                Teachers teacher = get_teacher_from_teacherId(school.id_teacher);
+                Managers manager = get_manager_from_managerId(school.id_manager);
+                result.Add(new SchoolOut(school, manager.name + " " + manager.surname + " " + manager.lastname, teacher.name + " " + teacher.surname + " " + teacher.lastname));
+            }
+            return Ok(result);
+        }
+
+        [Authorize]
+        [HttpPost("get_schools_with_adress")]
+        public async Task<IActionResult> GetSchools(FilterIn filter)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var schools = await _context.Schools.Where(sch => sch.adress == filter.adress).Include(s => s.items)  //FromSqlRaw($"SELECT * FROM Schools WHERE Schools.adress = {filter.adress}")
+                                                .ThenInclude(i => i.Item).ToListAsync();
+            if (schools.Count == 0)
+            {
+                return BadRequest(new { errorText = "No such schools" });
+            }
 
             List<SchoolOut> result = new List<SchoolOut>();
             foreach (Schools school in schools)
