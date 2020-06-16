@@ -539,6 +539,20 @@ namespace RoboSchoolBDProjectBackend.Controllers
         }
 
         [Authorize]
+        [HttpGet("get_requested_items_num_per_teacher")]
+        public async Task<IActionResult> GetRequestedItemsNumPerTeacher()
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var requests = await _context.Requests.FromSqlRaw("SELECT id_teacher, Sum(tems_num) AS ItemSum FROM Requests INNER JOIN Request_items ON Requests.id_request = Request_items.id_request WHERE finished = true GROUP BY id_teacher; ").ToListAsync(); 
+
+            return Ok(requests);
+        }
+
+
+        [Authorize]
         [HttpGet("confirm_request/{id_request}")]
         public async Task<IActionResult> ConfirmRequest([FromRoute] int id_request)
         {
