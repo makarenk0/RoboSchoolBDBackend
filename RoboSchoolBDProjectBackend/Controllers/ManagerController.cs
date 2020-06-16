@@ -68,6 +68,34 @@ namespace RoboSchoolBDProjectBackend.Controllers
             return Ok(managerOut);
         }
 
+        [Authorize]
+        [HttpPost("save_manager_info")]
+        [Consumes("application/json")]
+        public async Task<IActionResult> ManagerUpdate(ManagerUpdate manager)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            foreach (var item in manager.phones)
+            {
+                if (item == null || String.IsNullOrEmpty(item.phone)) return BadRequest(new { errorText = "Empty phone field!" });
+            }
+
+
+            await _context.Database.ExecuteSqlInterpolatedAsync($"UPDATE Managers SET name = {manager.name}, surname={manager.surname}, lastname={manager.lastname} WHERE Managers.id_manager = {manager.id_manager}");
+
+            await _context.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM Manager_phones WHERE Manager_phones.id_manager = {manager.id_manager}");
+            foreach (Models.IO_Objects.Manager.PhonesIn phone in manager.phones)
+            {
+
+                await _context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Manager_phones VALUES ({phone.phone}, {manager.id_manager});");
+            }
+
+            //await _context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Teachers VALUES ({null}, {teacher.name}, {teacher.surname}, {teacher.lastname}, {teacher.email},  {DateTime.Now}, {0}, {PasswordManager.PasswordSaveHashing(teacher.Password_temp, salt)} , {saltStr});");
+            return Ok();
+        }
+
 
         #region Groups
         [Authorize]
@@ -115,7 +143,11 @@ namespace RoboSchoolBDProjectBackend.Controllers
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
-            }  
+            }
+            if (group.pupils_number < 1)
+            {
+                return BadRequest(new { errorText = "Pupils number is invalid!" });
+            }
             await _context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO `Groups` VALUES ({null}, {group.pupils_number}, {group.name_course}, {get_schoolId_from_ManagerEmail(User.Identity.Name)});");
             return Ok();
         }
@@ -194,7 +226,9 @@ namespace RoboSchoolBDProjectBackend.Controllers
             List<RequestOut> result = new List<RequestOut>();
             foreach (Requests request in requests)
             {
-                result.Add(new RequestOut(request));
+                Managers manager = get_manager_from_managerId(request.id_manager);
+                Teachers teacher = get_teacher_from_teacherId(request.id_teacher);
+                result.Add(new RequestOut(request, manager.name + " " + manager.surname + " " + manager.lastname, teacher.name + " " + teacher.surname + " " + teacher.lastname));
             }
             return Ok(result);
         }
@@ -227,11 +261,11 @@ namespace RoboSchoolBDProjectBackend.Controllers
                                                  .Include(r => r.items)
                                                  .ThenInclude(i => i.Item).ToListAsync();
 
-            RequestOut currentRequest = new RequestOut(request.First());
+            
 
-            foreach (RequestOut.RequestItems item in currentRequest.items)
+            foreach (Request_items item in request.First().items)
             {
-                await _context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO School_items VALUES ({null}, {item.amount}, {DateTime.Now}, {get_schoolId_from_ManagerEmail(User.Identity.Name)} ,{item.id_item});");
+                await _context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO School_items VALUES ({null}, {item.items_num}, {DateTime.Now}, {get_schoolId_from_ManagerEmail(User.Identity.Name)} ,{item.id_item});");
             }
             return Ok();
         }
@@ -249,7 +283,7 @@ namespace RoboSchoolBDProjectBackend.Controllers
         }
             #endregion
 
-            #region Providers
+        #region Providers
 
             [Authorize]
         [HttpGet("get_all_providers")]
@@ -281,8 +315,16 @@ namespace RoboSchoolBDProjectBackend.Controllers
             var managerId = _context.Managers.FromSqlInterpolated($"SELECT * FROM Managers WHERE Managers.email = {email}").ToList();
             return managerId.First().id_manager;
         }
-
-
+        private Managers get_manager_from_managerId(int managerId)
+        {
+            var managers = _context.Managers.FromSqlInterpolated($"SELECT * FROM Managers WHERE Managers.id_manager = {managerId}").ToList();
+            return managers.First();
+        }
+        private Teachers get_teacher_from_teacherId(int teacherId)
+        {
+            var teachers = _context.Teachers.FromSqlInterpolated($"SELECT * FROM Teachers WHERE Teachers.id_teacher = {teacherId}").ToList();
+            return teachers.First();
+        }
         #endregion
 
 

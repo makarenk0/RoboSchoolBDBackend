@@ -8,15 +8,15 @@ namespace RoboSchoolBDProjectBackend.Models.IO_Objects.School
 {
     public class SchoolOut
     {
-        public SchoolOut(Schools schools)
+        public SchoolOut(Schools schools, String manager, String teacher)
         {
             Id = schools.id_school;
             Adress = schools.adress;
             Open_date = schools.open_date.ToShortDateString();
             Classrooms_number = schools.aud_number;
             
-            Manager_id = schools.id_manager;
-            Teacher_id = schools.id_teacher;
+            Manager = manager;
+            Teacher = teacher;
 
             items = new List<SchoolItems>();
 
@@ -30,15 +30,15 @@ namespace RoboSchoolBDProjectBackend.Models.IO_Objects.School
         public String Open_date { get; set; }
         public int Classrooms_number { get; set; }
         
-        public int Manager_id { get; set; }
-        public int Teacher_id { get; set; }
+        public String Manager { get; set; }
+        public String Teacher { get; set; }
 
         public List<SchoolItems> items { get; set; }
 
 
         public class SchoolItems
         {
-            public SchoolItems(int code, int id_item, int cost, int amount, String name)
+            public SchoolItems(int code, int id_item, double cost, int amount, String name)
             {
                 this.code = code;
                 this.id_item = id_item;
@@ -48,7 +48,7 @@ namespace RoboSchoolBDProjectBackend.Models.IO_Objects.School
             }
             public int code { get; set; }
             public int id_item { get; set; }
-            public int cost { get; set; }
+            public double cost { get; set; }
             public int amount { get; set; }
             public String name { get; set; }
         }

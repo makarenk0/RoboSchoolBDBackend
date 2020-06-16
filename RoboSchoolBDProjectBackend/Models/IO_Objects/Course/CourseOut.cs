@@ -21,7 +21,7 @@ namespace RoboSchoolBDProjectBackend.Models.OutObjects.Course
 
         public class CourseItems
         {
-            public CourseItems(int id_item, int cost, String prov_name, String name)
+            public CourseItems(int id_item, double cost, String prov_name, String name)
             {
                 this.id_item = id_item;
                 this.cost = cost;
@@ -29,7 +29,7 @@ namespace RoboSchoolBDProjectBackend.Models.OutObjects.Course
                 this.name = name;
             }
             public int id_item { get; set; }
-            public int cost { get; set; }
+            public double cost { get; set; }
             public String prov_name { get; set; }
             public String name { get; set; }
         }

@@ -7,6 +7,7 @@ namespace RoboSchoolBDProjectBackend.Models.Teacher
     public class TeacherContext : DbContext
     {
         public DbSet<Teachers> Teachers { get; set; }
+        public DbSet<Managers> Managers { get; set; }
         public DbSet<Groups> Groups { get; set; }
         public DbSet<HashSalt> HashSalts { get; set; }
         public DbSet<Schools> Schools { get; set; }

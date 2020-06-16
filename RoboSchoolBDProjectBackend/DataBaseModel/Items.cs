@@ -16,7 +16,7 @@ namespace RoboSchoolBDProjectBackend.DataBaseModel
 
         [Key]
         public int id_item { get; set; }
-        public int cost { get; set; }
+        public double cost { get; set; }
         public String prov_name { get; set; }
         public String name { get; set; }
 
